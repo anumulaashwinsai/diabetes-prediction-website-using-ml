@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Risk Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #4a6fa5 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #2d3748;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .result.no-diabetes {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+            border: 2px solid #68d391;
+        }
+
+        .result.prediabetes {
+            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+            color: #c05621;
+            border: 2px solid #f6ad55;
+        }
+
+        .result.diabetes {
+            background: linear-gradient(135deg, #fed7d7 0%, #fc8181 100%);
+            color: #c53030;
+            border: 2px solid #f56565;
+        }
+
+        .result-details {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        .risk-score {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .disclaimer {
+            background: #f7fafc;
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🩺 Diabetes Risk Prediction</h1>
+            <p>AI-Powered Health Assessment Tool</p>
+        </div>
+
+        <div class="form-section">
+            <form id="diabetesForm">
+                <!-- Demographics -->
+                <div class="section-title">👤 Demographics</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="sex">Sex</label>
+                        <select id="sex" name="sex" required>
+                            <option value="">Select sex</option>
+                            <option value="0">Female</option>
+                            <option value="1">Male</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="age">Age Group</label>
+                        <select id="age" name="age" required>
+                            <option value="">Select age group</option>
+                            <option value="1">18-24 years</option>
+                            <option value="2">25-29 years</option>
+                            <option value="3">30-34 years</option>
+                            <option value="4">35-39 years</option>
+                            <option value="5">40-44 years</option>
+                            <option value="6">45-49 years</option>
+                            <option value="7">50-54 years</option>
+                            <option value="8">55-59 years</option>
+                            <option value="9">60-64 years</option>
+                            <option value="10">65-69 years</option>
+                            <option value="11">70-74 years</option>
+                            <option value="12">75-79 years</option>
+                            <option value="13">80+ years</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="education">Education Level</label>
+                        <select id="education" name="education" required>
+                            <option value="">Select education level</option>
+                            <option value="1">Never attended school or kindergarten only</option>
+                            <option value="2">Elementary (Grades 1-8)</option>
+                            <option value="3">Some high school (Grades 9-11)</option>
+                            <option value="4">High school graduate</option>
+                            <option value="5">Some college or technical school</option>
+                            <option value="6">College graduate</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="income">Income Level</label>
+                        <select id="income" name="income" required>
+                            <option value="">Select income level</option>
+                            <option value="1">Less than $10,000</option>
+                            <option value="2">$10,000 to $14,999</option>
+                            <option value="3">$15,000 to $19,999</option>
+                            <option value="4">$20,000 to $24,999</option>
+                            <option value="5">$25,000 to $34,999</option>
+                            <option value="6">$35,000 to $49,999</option>
+                            <option value="7">$50,000 to $74,999</option>
+                            <option value="8">$75,000 or more</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Physical Health -->
+                <div class="section-title">🏃 Physical Health</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bmi">BMI (Body Mass Index)</label>
+                        <input type="number" id="bmi" name="bmi" min="12" max="98" step="0.1" placeholder="Enter your BMI" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="genhlth">General Health</label>
+                        <select id="genhlth" name="genhlth" required>
+                            <option value="">Rate your general health</option>
+                            <option value="1">Excellent</option>
+                            <option value="2">Very good</option>
+                            <option value="3">Good</option>
+                            <option value="4">Fair</option>
+                            <option value="5">Poor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="menthlth">Mental Health (days in past 30)</label>
+                        <input type="number" id="menthlth" name="menthlth" min="0" max="30" placeholder="Days of poor mental health" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="physhlth">Physical Health (days in past 30)</label>
+                        <input type="number" id="physhlth" name="physhlth" min="0" max="30" placeholder="Days of poor physical health" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="diffwalk">Difficulty Walking</label>
+                        <select id="diffwalk" name="diffwalk" required>
+                            <option value="">Do you have difficulty walking?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="physactivity">Physical Activity</label>
+                        <select id="physactivity" name="physactivity" required>
+                            <option value="">Physical activity in past 30 days?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Medical History -->
+                <div class="section-title">🏥 Medical History</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="highbp">High Blood Pressure</label>
+                        <select id="highbp" name="highbp" required>
+                            <option value="">Ever told you have high blood pressure?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="highchol">High Cholesterol</label>
+                        <select id="highchol" name="highchol" required>
+                            <option value="">Ever told you have high cholesterol?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cholcheck">Cholesterol Check</label>
+                        <select id="cholcheck" name="cholcheck" required>
+                            <option value="">Cholesterol check in past 5 years?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stroke">Stroke</label>
+                        <select id="stroke" name="stroke" required>
+                            <option value="">Ever told you had a stroke?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="heartdiseaseorattack">Heart Disease or Attack</label>
+                        <select id="heartdiseaseorattack" name="heartdiseaseorattack" required>
+                            <option value="">Ever told you had heart disease or attack?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Lifestyle -->
+                <div class="section-title">🍎 Lifestyle</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="smoker">Smoking Status</label>
+                        <select id="smoker" name="smoker" required>
+                            <option value="">Have you smoked 100+ cigarettes in lifetime?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hvyalcoholconsump">Heavy Alcohol Consumption</label>
+                        <select id="hvyalcoholconsump" name="hvyalcoholconsump" required>
+                            <option value="">Heavy alcohol consumption?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fruits">Fruit Consumption</label>
+                        <select id="fruits" name="fruits" required>
+                            <option value="">Consume fruit 1+ times per day?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="veggies">Vegetable Consumption</label>
+                        <select id="veggies" name="veggies" required>
+                            <option value="">Consume vegetables 1+ times per day?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Healthcare Access -->
+                <div class="section-title">🏥 Healthcare Access</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="anyhealthcare">Healthcare Coverage</label>
+                        <select id="anyhealthcare" name="anyhealthcare" required>
+                            <option value="">Do you have healthcare coverage?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nodocbccost">No Doctor Due to Cost</label>
+                        <select id="nodocbccost" name="nodocbccost" required>
+                            <option value="">Couldn't see doctor due to cost in past 12 months?</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="predict-btn">Predict Diabetes Risk</button>
+            </form>
+
+            <div id="result" class="result"></div>
+        </div>
+
+        <div class="disclaimer">
+            <p><strong>Disclaimer:</strong> This tool provides educational estimates only and should not replace professional medical advice. Always consult healthcare providers for medical decisions.</p>
+        </div>
+    </div>
+
+    <script>
+        // Simplified ML model based on research patterns
+        function predictDiabetes(features) {
+            let riskScore = 0;
+            
+            // Age risk (older = higher risk)
+            const ageWeights = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5];
+            riskScore += ageWeights[features.Age] || 0;
+            
+            // BMI risk
+            if (features.BMI >= 35) riskScore += 3;
+            else if (features.BMI >= 30) riskScore += 2;
+            else if (features.BMI >= 25) riskScore += 1;
+            
+            // Medical conditions (major risk factors)
+            if (features.HighBP === 1) riskScore += 2;
+            if (features.HighChol === 1) riskScore += 1.5;
+            if (features.HeartDiseaseorAttack === 1) riskScore += 2;
+            if (features.Stroke === 1) riskScore += 1.5;
+            
+            // General health
+            const healthWeights = [0, 0, 0.5, 1, 2, 3];
+            riskScore += healthWeights[features.GenHlth] || 0;
+            
+            // Physical issues
+            if (features.DiffWalk === 1) riskScore += 1;
+            if (features.PhysActivity === 0) riskScore += 1;
+            
+            // Mental/Physical health days
+            if (features.MentHlth > 15) riskScore += 0.5;
+            if (features.PhysHlth > 15) riskScore += 1;
+            
+            // Lifestyle factors
+            if (features.Smoker === 1) riskScore += 0.5;
+            if (features.HvyAlcoholConsump === 1) riskScore += 0.5;
+            
+            // Protective factors
+            if (features.Fruits === 1) riskScore -= 0.3;
+            if (features.Veggies === 1) riskScore -= 0.3;
+            if (features.AnyHealthcare === 1) riskScore -= 0.2;
+            
+            // Healthcare access issues
+            if (features.NoDocbcCost === 1) riskScore += 0.5;
+            
+            // Socioeconomic factors
+            if (features.Education <= 2) riskScore += 0.5;
+            if (features.Income <= 3) riskScore += 0.5;
+            
+            // Gender factor (slight difference)
+            if (features.Sex === 1) riskScore += 0.2; // Males slightly higher risk
+            
+            return riskScore;
+        }
+
+        function classifyRisk(score) {
+            if (score >= 8) return 2; // High risk (Diabetes)
+            else if (score >= 4) return 1; // Moderate risk (Prediabetes)
+            else return 0; // Low risk (No diabetes)
+        }
+
+        document.getElementById('diabetesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const features = {};
+            
+            // Convert form data
+            const fieldMapping = {
+                'highbp': 'HighBP',
+                'highchol': 'HighChol',
+                'cholcheck': 'CholCheck',
+                'bmi': 'BMI',
+                'smoker': 'Smoker',
+                'stroke': 'Stroke',
+                'heartdiseaseorattack': 'HeartDiseaseorAttack',
+                'physactivity': 'PhysActivity',
+                'fruits': 'Fruits',
+                'veggies': 'Veggies',
+                'hvyalcoholconsump': 'HvyAlcoholConsump',
+                'anyhealthcare': 'AnyHealthcare',
+                'nodocbccost': 'NoDocbcCost',
+                'genhlth': 'GenHlth',
+                'menthlth': 'MentHlth',
+                'physhlth': 'PhysHlth',
+                'diffwalk': 'DiffWalk',
+                'sex': 'Sex',
+                'age': 'Age',
+                'education': 'Education',
+                'income': 'Income'
+            };
+            
+            for (const [key, value] of formData.entries()) {
+                const mappedKey = fieldMapping[key];
+                if (key === 'bmi' || key === 'menthlth' || key === 'physhlth') {
+                    features[mappedKey] = parseFloat(value);
+                } else {
+                    features[mappedKey] = parseInt(value);
+                }
+            }
+            
+            // Calculate risk
+            const riskScore = predictDiabetes(features);
+            const prediction = classifyRisk(riskScore);
+            
+            // Display result
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            
+            let resultClass, title, description, riskLevel;
+            
+            if (prediction === 2) {
+                resultClass = 'diabetes';
+                title = '⚠️ High Risk - Diabetes Indicated';
+                description = 'Based on the health indicators provided, there is a strong indication of diabetes risk. Please consult with a healthcare professional immediately for proper testing and evaluation.';
+                riskLevel = 'High';
+            } else if (prediction === 1) {
+                resultClass = 'prediabetes';
+                title = '⚡ Moderate Risk - Prediabetes Indicated';
+                description = 'Based on the health indicators provided, there may be signs of prediabetes. Consider lifestyle modifications and consult with a healthcare professional for further evaluation.';
+                riskLevel = 'Moderate';
+            } else {
+                resultClass = 'no-diabetes';
+                title = '✅ Lower Risk - No Diabetes Indicated';
+                description = 'Based on the current health indicators, the risk appears to be lower. Continue maintaining a healthy lifestyle and regular health checkups.';
+                riskLevel = 'Low';
+            }
+            
+            resultDiv.className = `result ${resultClass}`;
+            resultDiv.innerHTML = `
+                <strong>${title}</strong>
+                <div class="result-details">${description}</div>
+                <div class="risk-score">
+                    <strong>Risk Level:</strong> ${riskLevel}<br>
+                    <strong>Risk Score:</strong> ${riskScore.toFixed(1)}/15
+                </div>
+            `;
+            
+            // Scroll to result
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

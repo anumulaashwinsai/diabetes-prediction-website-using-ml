@@ -1,0 +1,6 @@
+diabetes_model.pkl
+diabetes_model_compressed.pkl
+*.csv
+__pycache__/
+*.pyc
+diabetes_env/
